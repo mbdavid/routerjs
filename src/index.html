@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<script src="Promise.js"></script>
+		<script src="router.js"></script>
+	</head>
+	<body>
+		<h1>Open console</h1>
+		<hr/>
+		<a href="#demo">#demo</a>
+		
+		
+		
+		<script>
+			
+			router('*', function(ctx, next) { console.log('init', ctx); next(); });
+			
+			router('#demo', log);
+			
+			router('*', function(ctx, next) { console.log('end', ctx); next(); });
+			
+			
+			router(function(ctx) {
+				console.error('error on router', ctx);
+			});
+			
+			router();
+			
+			function log(ctx, next) {
+				console.log('logging', ctx);
+				next();
+			}
+			
+			
+		</script>
+	</body>
+</html>
