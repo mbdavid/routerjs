@@ -15,7 +15,7 @@ var router = (function () {
         }
     }
 
-    function go(url) {
+    function redirect(url) {
         window.location.hash = url;
         if(running === false) setTimeout(start);
     }
@@ -86,9 +86,8 @@ var router = (function () {
         // create context var - is the some across all matches and all callbacks
         var context = {
             url: hash,
-            path: path.replace(/^#/, ''),
+            path: path,
             segments: segments ? segments.split('/') : [],
-            pathQuery: path.replace(/^#/, '') + (qstr ? '?' + qstr : ''),
             queryString: qstr,
             query: parseQueryString(qstr)
         };
@@ -180,21 +179,20 @@ var router = (function () {
         return obj;
     }
 
+    // stop listen hashchange
     function stop() {
         running = false;
     }
 
     // creating router function initializer
-    var router = function () {
-        if (arguments.length == 0) return start();
-        if (arguments.length == 1 && typeof arguments[0] == 'string') return go(arguments[0]);
+    return function () {
+        // start/stop
+        if (arguments.length == 0 || (arguments.length == 1 && arguments[0] === true)) return start();
+        if (arguments.length == 1 && arguments[0] === false) return stop();
+        // redirect
+        if (arguments.length == 1 && typeof arguments[0] == 'string') return redirect(arguments[0]);
+        // add new route
         add.apply(this, arguments);
     };
-
-    // adding helper functions
-    router.parseQueryString = parseQueryString;
-    router.stop = stop;
-
-    return router;
 
 })();
