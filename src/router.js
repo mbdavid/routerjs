@@ -81,8 +81,9 @@ var router = (function () {
 
         var qstr = hash.replace(/^[^\?]*\??/, '');  // remove url, keep only query string without ?
         var segments = path.replace(/^#\/?/, '').replace(/\/$/, ''); // names between /
-        var matches = [];
+        var queue = [];
 
+        // create context var - is the some across all matches and all callbacks
         var context = {
             url: hash,
             path: path.replace(/^#/, ''),
@@ -100,46 +101,73 @@ var router = (function () {
             var route = routes[i];
             var params = {};
 
+            // get params from route vars
             for (var j = 0; j < route.vars.length; j++) {
                 var value = decodeURIComponent(path.replace(route.regex, '$' + (j + 1)));
                 params[route.vars[j].substring(1)] = value;
             }
 
+            // no vars? can be a url regex
             if (route.vars.length == 0) {
-                match.forEach(function (value, index) {
-                    if (index > 0) {
-                        params[index] = value;
+                for(var m in match) {
+                    if(m > 0) { 
+                        params[m] = match[m];
                     }
-                });
+                }
             }
             
-            matches.push({ callbacks: route.callbacks, params: params });
-            
+            // add all callbacks to a queue
+            for(var cb in route.callbacks) {
+                queue.push({ fn: route.callbacks[cb], params: params });
+            }
+
         }
-        
-        if(matches.length > 0) {
+
+        if(queue.length > 0) {
+            executeQueue(context, queue, 0);
         }
         else {
-            context.error = { code: 404, message: 'Route not found' };
-            executeQueue(context, errors, 0);
+            executeErrorQueue('Router not found', context, 0);
         }
     }
 
-    function executeQueue(context, callbacks, index) {
+    // execute in queue all callbacks in all routes that url match
+    function executeQueue(context, queue, index) {
 
-        if (index >= callbacks.length) return;
+        if (index >= queue.length) return;
 
-        var fn = callbacks[index];
-        var next = function () { executeQueue(context, callbacks, index + 1); }
-
-        fn(context, next);
+        var callback = queue[index];
+        var next = function (err) {
+            if(err !== undefined) {
+                executeErrorQueue(err, context, 0);
+            }
+            else {
+                executeQueue(context, queue, index + 1);
+            }
+        };
+        
+        context.params = queue.params;
+        callback.fn(context, next);
     }
 
+    // execute error function queue
+    function executeErrorQueue(err, context, index) {
+        
+        if(index >= errors.length) return;
+        
+        var fn = errors[index];
+        var next = function() {
+            executeErrorQueue(err, context, index + 1);
+        };
+        
+        fn(err, context, next);
+        
+    }
+
+    // parse a querystring to an object
     function parseQueryString(str) {
 
-        if (str.replace(/^\s+/, '').replace(/\s+$/, '').length == 0) {
-            return {};
-        }
+        if (str.trim().length === 0) return {};
 
         var arr = str.split('&');
         var obj = {};
@@ -151,10 +179,10 @@ var router = (function () {
 
         return obj;
     }
-    
+
     function stop() {
         running = false;
-    }    
+    }
 
     // creating router function initializer
     var router = function () {

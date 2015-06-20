@@ -1,32 +1,34 @@
 <html>
 	<head>
-		<script src="Promise.js"></script>
 		<script src="router.js"></script>
 	</head>
 	<body>
 		<h1>Open console</h1>
 		<hr/>
-		<a href="#demo">#demo</a>
-		
+		<a href="#/mydoc">#/mydoc</a><br/>
+		<a href="#/mydoc/notfound">#/mydoc/notfound</a><br/>
+		<a href="#/mydoc/throw">#/mydoc/throw</a><br/>
 		
 		
 		<script>
 			
-			router('*', function(ctx, next) { console.log('init', ctx); next(); });
+			router('*', function(ctx, next) { ctx.init = true; console.log('init', JSON.stringify(ctx)); next(); });
 			
-			router('#demo', log);
+			router('#/:docId', log);
 			
-			router('*', function(ctx, next) { console.log('end', ctx); next(); });
+			router('#/:docId/throw', function(ctx, next) { next('this route has an error'); });
+			
+			router('*', function(ctx, next) { ctx.end = true; console.log('end', JSON.stringify(ctx)); next(); });
 			
 			
-			router(function(ctx) {
-				console.error('error on router', ctx);
+			router(function(err, ctx, next) {
+				console.error('init error callback', err);
 			});
 			
 			router();
 			
 			function log(ctx, next) {
-				console.log('logging', ctx);
+				console.log('logging = ', JSON.stringify(ctx));
 				next();
 			}
 			
