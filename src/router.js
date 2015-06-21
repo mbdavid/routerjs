@@ -1,4 +1,12 @@
-var router = (function () {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(factory);
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
+    } else {
+        root.router = factory();
+    }
+}(this, function () {
 
     var routes = [];
     var errors = [];
@@ -51,6 +59,7 @@ var router = (function () {
             route.vars = [];
         }
         else if(url === '*') {
+            route.all = true;
             route.regex = /.*/;
             route.vars = [];
         }
@@ -82,6 +91,7 @@ var router = (function () {
         var qstr = hash.replace(/^[^\?]*\??/, '');  // remove url, keep only query string without ?
         var segments = path.replace(/^#\/?/, '').replace(/\/$/, ''); // names between /
         var queue = [];
+        var found = 0;
 
         // create context var - is the some across all matches and all callbacks
         var context = {
@@ -115,6 +125,9 @@ var router = (function () {
                 }
             }
             
+            // count if found a non-all route
+            found += route.all ? 0 : 1;
+                        
             // add all callbacks to a queue
             for(var cb in route.callbacks) {
                 queue.push({ fn: route.callbacks[cb], params: params });
@@ -122,11 +135,11 @@ var router = (function () {
 
         }
 
-        if(queue.length > 0) {
+        if(found) {
             executeQueue(context, queue, 0);
         }
         else {
-            executeErrorQueue('Router not found', context, 0);
+            executeErrorQueue(404, context, 0);
         }
     }
 
@@ -195,4 +208,4 @@ var router = (function () {
         add.apply(this, arguments);
     };
 
-})();
+}));
