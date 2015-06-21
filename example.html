@@ -1,0 +1,38 @@
+<html>
+	<head>
+		<script src="router.js"></script>
+	</head>
+	<body>
+		<h1>Open console</h1>
+		<hr/>
+		<a href="#/mydoc">#/mydoc</a><br/>
+		<a href="#/mydoc/notfound">#/mydoc/notfound</a><br/>
+		<a href="#/mydoc/throw">#/mydoc/throw</a><br/>
+		
+		
+		<script>
+			
+			router('*', function(ctx, next) { ctx.init = true; console.log('init', JSON.stringify(ctx)); next(); });
+			
+			router('#/:docId', log);
+			
+			router('#/:docId/throw', function(ctx, next) { next('this route has an error'); });
+			
+			router('*', function(ctx, next) { ctx.end = true; console.log('end', JSON.stringify(ctx)); next(); });
+			
+			
+			router(function(err, ctx, next) {
+				console.error('init error callback', err);
+			});
+			
+			router();
+			
+			function log(ctx, next) {
+				console.log('logging = ', JSON.stringify(ctx));
+				next();
+			}
+			
+			
+		</script>
+	</body>
+</html>
