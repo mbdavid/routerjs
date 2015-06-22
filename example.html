@@ -14,6 +14,8 @@
 			
 			router('*', function(ctx, next) { ctx.init = true; console.log('init', JSON.stringify(ctx)); next(); });
 			
+			router('#/', log, function(ctx, next) { console.log('home'); next(); });
+			
 			router('#/:docId', log);
 			
 			router('#/:docId/throw', function(ctx, next) { next('this route has an error'); });
